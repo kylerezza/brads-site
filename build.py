@@ -19,6 +19,8 @@ PUBLISHER = "Yucel Sanli"
 # TODO(owner): make sure this address receives mail (email forwarding on the domain).
 CONTACT_EMAIL = "support@brads.io"
 EFFECTIVE_DATE = "November 11, 2026"
+AD_PARTNER = "AppLovin"
+AD_PARTNER_PRIVACY = "https://www.applovin.com/privacy/"
 APPLE_EULA = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
 
 # Only apps with published=True appear on the site. Turn an app on shortly
@@ -80,7 +82,7 @@ def home() -> str:
     return f"""
 <section class="hero">
   <h1>Small, calm games for iPhone and iPad.</h1>
-  <p class="lead">No ads. No tracking. Your progress stays on your device and in your own iCloud.</p>
+  <p class="lead">Free to play. Your progress stays on your device and in your own iCloud.</p>
 </section>
 <section>
   <h2>Our apps</h2>
@@ -93,10 +95,10 @@ def privacy_body(app: dict | None) -> str:
     if app:
         heading = f"{e(app['name'])} privacy policy"
         scope = (f"This policy covers <strong>{e(app['name'])}</strong> for iPhone and iPad, "
-                 f"published by {e(PUBLISHER)}.")
+                 f"published by {e(PUBLISHER)} (“we”).")
     else:
         heading = "Privacy policy"
-        scope = (f"This policy covers every app published by {e(PUBLISHER)} on the App Store "
+        scope = (f"This policy covers every app published by {e(PUBLISHER)} (“we”) on the App Store "
                  f"(“our apps”). Each app also has its own page, listed at the bottom.")
 
     photos = ""
@@ -106,7 +108,8 @@ def privacy_body(app: dict | None) -> str:
 <h3>Photos you choose</h3>
 <p>{who} you turn a photo into a puzzle. You pick the photo with Apple’s photo picker, so the app only
 sees the photo you choose and never your whole library. The photo is processed on your device and is never
-uploaded. Only the finished pattern is saved, on your device and, if you use iCloud, in your own iCloud account.</p>
+uploaded or shared with advertisers. Only the finished pattern is saved, on your device and, if you use iCloud,
+in your own iCloud account.</p>
 """
 
     per_app = ""
@@ -122,26 +125,56 @@ uploaded. Only the finished pattern is saved, on your device and, if you use iCl
 <p>{scope}</p>
 
 <div class="callout">
-  <p><strong>The short version:</strong> we do not collect any data about you. No accounts, no ads, no analytics,
-  no tracking. Your App Store privacy label says <strong>“Data Not Collected”</strong>.</p>
+  <p><strong>The short version:</strong> our apps are free to play with ads. The ads are provided by
+  {e(AD_PARTNER)}, which collects some device and usage data to show and measure ads. If you allow tracking,
+  ads can be personalised; if you don’t, you still see ads, just not personalised ones. A monthly subscription
+  removes all ads. We do not run our own analytics, and we have no accounts.</p>
 </div>
 
-<h2>What we collect</h2>
-<p>Nothing. Our apps do not send personal information, usage data, identifiers or diagnostics to us or to
-anyone else. We do not use advertising, analytics, crash-reporting or tracking tools, and we do not sell or share data.</p>
+<h2>Data collected for advertising</h2>
+<p>When you use the free version, the advertising software inside the app ({e(AD_PARTNER)}, including its
+ad mediation partners) may collect:</p>
+<ul>
+  <li><strong>Device identifiers</strong> — the advertising identifier (IDFA) only if you allow tracking, and
+  identifiers for this app on your device;</li>
+  <li><strong>Device and network information</strong> — such as device model, operating system, language,
+  IP address and the approximate location derived from it;</li>
+  <li><strong>Ad interactions and app usage</strong> — such as which ads were shown or tapped and basic events
+  needed to decide when ads are shown;</li>
+  <li><strong>Diagnostics</strong> — such as ad-loading errors and performance data.</li>
+</ul>
+<p>This data is used to show ads, limit how often you see them, measure them, prevent fraud and, if you allow
+tracking, personalise them. {e(AD_PARTNER)} processes it under its own privacy policy:
+<a href="{AD_PARTNER_PRIVACY}">{e(AD_PARTNER_PRIVACY)}</a>. We receive only aggregated reports (for example,
+how many ads were shown) and cannot identify you from them.</p>
+
+<h3>Your choices</h3>
+<ul>
+  <li><strong>Tracking:</strong> after your first finished game, the app asks whether it may track you
+  (Apple’s App Tracking Transparency prompt). You can change this any time in Settings › Privacy &amp; Security ›
+  Tracking.</li>
+  <li><strong>Personalised ads:</strong> if you decline tracking, ads are not personalised.</li>
+  <li><strong>No ads at all:</strong> an active monthly subscription turns ads off.</li>
+  <li><strong>Opt-out requests:</strong> you can ask {e(AD_PARTNER)} not to sell or share your data, or to
+  delete data it holds, using the options in its privacy policy.</li>
+</ul>
+
+<h2>Data we do not collect</h2>
+<p>We do not ask for your name, email or any account. We do not use separate analytics, attribution or
+crash-reporting tools. We do not sell data ourselves.</p>
 
 <h2>Where your game data lives</h2>
 <h3>On your device</h3>
 <p>Your progress, settings and creations are stored on your device.</p>
 <h3>Your own iCloud (optional)</h3>
 <p>If you are signed in to iCloud, the app can sync your progress between your devices using Apple’s iCloud
-in your private iCloud account. We cannot see or access this data. You can turn this off in your device’s
-Settings › [your name] › iCloud, and delete it there.</p>
+in your private iCloud account. We cannot see or access this data. You can turn this off and delete it in
+Settings › [your name] › iCloud.</p>
 {photos}
 <h3>Purchases and subscriptions</h3>
 <p>Purchases and subscriptions are handled entirely by Apple through the App Store. We never see your name,
-email or payment details. The app only asks Apple whether a purchase is active. You can manage or cancel
-subscriptions in Settings › [your name] › Subscriptions.</p>
+email or payment details. The app only asks Apple whether a purchase or subscription is active. Manage or
+cancel subscriptions in Settings › [your name] › Subscriptions.</p>
 <h3>Game Center (optional)</h3>
 <p>If you choose to use Game Center for achievements or leaderboards, Apple handles it under
 <a href="https://www.apple.com/legal/privacy/">Apple’s Privacy Policy</a>. We only see what Apple shows to
@@ -150,20 +183,22 @@ all developers on a leaderboard, such as your Game Center nickname and score.</p
 <p>Reminders are local notifications created on your device. They are off until you turn them on.</p>
 <h3>Crash reports from Apple</h3>
 <p>If you have chosen to share analytics with app developers in your device settings, Apple may give us
-anonymous crash reports and usage statistics. You can change this in Settings › Privacy &amp; Security ›
+anonymous crash reports and usage statistics. Change this in Settings › Privacy &amp; Security ›
 Analytics &amp; Improvements.</p>
 
 <h2>Children</h2>
-<p>Our apps are made for a general audience and are not directed at children under 13. Because we collect no
-data, we do not knowingly collect data from children.</p>
+<p>Our apps are made for a general audience and are not directed at children under 13. We do not knowingly
+collect personal data from children. If you believe a child has used one of our apps and data was collected,
+contact us and we will help you ask {e(AD_PARTNER)} to delete it.</p>
 
 <h2>Your rights</h2>
-<p>Because we hold no personal data about you, there is nothing for us to access, correct, export or delete.
-Data in your iCloud account is under your control. If you have a question, write to us and we will answer.</p>
+<p>Depending on where you live, you may have rights to access, delete or object to the use of personal data.
+We do not hold personal data about you ourselves; advertising data is held by {e(AD_PARTNER)}, and you can use
+its privacy options or write to us and we will help.</p>
 
 <h2>Changes to this policy</h2>
-<p>If this policy changes, we will update this page and the effective date above. If an app ever starts
-collecting data, we will update this policy and the App Store privacy label before that version is released.</p>
+<p>If this policy changes, we will update this page and the effective date above, and update the App Store
+privacy label before the changed version is released.</p>
 
 <h2>Contact</h2>
 <p>{e(PUBLISHER)} &middot; <a href="mailto:{e(CONTACT_EMAIL)}">{e(CONTACT_EMAIL)}</a></p>
@@ -198,6 +233,8 @@ Tell us which app, your device and iOS version, and what happened.</p>
 <h2>Common questions</h2>
 <h3>How do I restore a purchase?</h3>
 <p>Open the app’s Settings and tap <em>Restore Purchases</em>, signed in with the same Apple Account you bought with.</p>
+<h3>How do I remove ads?</h3>
+<p>Start the monthly subscription from the app’s Settings. While it is active, the app shows no ads.</p>
 <h3>How do I cancel a subscription?</h3>
 <p>On your iPhone or iPad: Settings › [your name] › Subscriptions, then choose the app.</p>
 <h3>How do I get a refund?</h3>
