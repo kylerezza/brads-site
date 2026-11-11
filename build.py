@@ -15,8 +15,7 @@ from pathlib import Path
 SITE_NAME = "brads.io"
 DOMAIN = "brads.io"
 # The legal person or company that publishes the apps (the App Store seller).
-# TODO(owner): replace with the exact legal name once Apple enrolment is done.
-PUBLISHER = "brads.io"
+PUBLISHER = "Yucel Sanli"
 # TODO(owner): make sure this address receives mail (email forwarding on the domain).
 CONTACT_EMAIL = "support@brads.io"
 EFFECTIVE_DATE = "November 11, 2026"
