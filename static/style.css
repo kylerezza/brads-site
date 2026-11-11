@@ -1,0 +1,56 @@
+:root {
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --text: #24211c;
+  --muted: #6b655c;
+  --line: #e7e2d9;
+  --accent: #3d6b5a;
+  --callout: #eef4f0;
+  --max: 42rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171614;
+    --surface: #201e1b;
+    --text: #ece8e1;
+    --muted: #a39c91;
+    --line: #34312c;
+    --accent: #8cc2ad;
+    --callout: #1f2a25;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+header.site, main, footer.site { max-width: var(--max); margin: 0 auto; padding: 0 16px; }
+header.site {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  padding-top: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; font-size: 1.1rem; color: var(--text); text-decoration: none; letter-spacing: -0.01em; }
+nav { display: flex; gap: 18px; }
+nav a { color: var(--muted); text-decoration: none; font-size: 0.95rem; }
+nav a:hover { color: var(--text); }
+main { padding-top: 32px; padding-bottom: 48px; }
+h1 { font-size: 1.9rem; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 12px; }
+h2 { font-size: 1.25rem; margin: 36px 0 8px; }
+h3 { font-size: 1.02rem; margin: 22px 0 4px; }
+p { margin: 0 0 12px; }
+.lead { font-size: 1.15rem; color: var(--muted); }
+.hero { padding: 24px 0 8px; }
+.meta { color: var(--muted); font-size: 0.9rem; }
+.callout { background: var(--callout); border-radius: 12px; padding: 16px 18px; margin: 20px 0; }
+.callout p { margin: 0; }
+ul.apps { list-style: none; padding: 0; margin: 0; }
+ul.apps li {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px;
+  padding: 14px 0; border-bottom: 1px solid var(--line);
+}
+ul.apps span { color: var(--muted); }
+footer.site { border-top: 1px solid var(--line); padding-top: 20px; padding-bottom: 40px; color: var(--muted); font-size: 0.9rem; }
