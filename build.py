@@ -127,8 +127,8 @@ in your own iCloud account.</p>
 <div class="callout">
   <p><strong>The short version:</strong> our apps are free to play with ads. The ads are provided by
   {e(AD_PARTNER)}, which collects some device and usage data to show and measure ads. If you allow tracking,
-  ads can be personalised; if you don’t, you still see ads, just not personalised ones. A monthly subscription
-  removes all ads. We do not run our own analytics, and we have no accounts.</p>
+  ads can be personalised; if you don’t, you still see ads, just not personalised ones. A one-time Remove Ads
+  purchase turns off pop-up and banner ads, and a monthly subscription removes all ads. We do not run our own analytics, and we have no accounts.</p>
 </div>
 
 <h2>Data collected for advertising</h2>
@@ -154,7 +154,7 @@ how many ads were shown) and cannot identify you from them.</p>
   (Apple’s App Tracking Transparency prompt). You can change this any time in Settings › Privacy &amp; Security ›
   Tracking.</li>
   <li><strong>Personalised ads:</strong> if you decline tracking, ads are not personalised.</li>
-  <li><strong>No ads at all:</strong> an active monthly subscription turns ads off.</li>
+  <li><strong>Fewer or no ads:</strong> the one-time Remove Ads purchase turns off pop-up and banner ads; an active monthly subscription turns off all ads.</li>
   <li><strong>Opt-out requests:</strong> you can ask {e(AD_PARTNER)} not to sell or share your data, or to
   delete data it holds, using the options in its privacy policy.</li>
 </ul>
@@ -234,7 +234,7 @@ Tell us which app, your device and iOS version, and what happened.</p>
 <h3>How do I restore a purchase?</h3>
 <p>Open the app’s Settings and tap <em>Restore Purchases</em>, signed in with the same Apple Account you bought with.</p>
 <h3>How do I remove ads?</h3>
-<p>Start the monthly subscription from the app’s Settings. While it is active, the app shows no ads.</p>
+<p>Buy <em>Remove Ads</em> once in the app’s Settings to turn off pop-up and banner ads for good, or start the monthly subscription, which turns off all ads and unlocks everything while it is active.</p>
 <h3>How do I cancel a subscription?</h3>
 <p>On your iPhone or iPad: Settings › [your name] › Subscriptions, then choose the app.</p>
 <h3>How do I get a refund?</h3>
