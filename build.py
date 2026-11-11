@@ -8,6 +8,7 @@ Standard library only.
 from __future__ import annotations
 
 import html
+import random
 import shutil
 from pathlib import Path
 
@@ -41,29 +42,77 @@ e = html.escape
 
 
 # ---------------------------------------------------------------- layout
-def page(title: str, body: str, depth: int) -> str:
+X_MARK = ('<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 8 8 2M2 2l6 6" stroke="currentColor" '
+          'stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>')
+FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+           "%3Crect width='32' height='32' rx='8' fill='%23f1eadc'/%3E%3Cpath d='M9 23 23 9M9 9l14 14' "
+           "stroke='%239a3b48' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E")
+DESCRIPTION = "Small, calm games for iPhone and iPad, made by hand by one person."
+
+
+def back_of_work() -> str:
+    """The footer shows the reverse of the fabric: loose tails, carried threads and knots. Deterministic."""
+    rnd = random.Random(7)
+    floss = ["#9a3b48", "#74293a", "#c06272", "#6a7f6e", "#c9a27c", "#8a5f86"]
+    parts = []
+    for _ in range(9):  # long carried threads
+        y1, y2 = rnd.uniform(20, 200), rnd.uniform(20, 200)
+        x1 = rnd.uniform(-60, 500); x2 = x1 + rnd.uniform(300, 800)
+        cy = (y1 + y2) / 2 + rnd.uniform(-40, 40)
+        parts.append(f'<path d="M{x1:.0f} {y1:.0f}Q{(x1+x2)/2:.0f} {cy:.0f} {x2:.0f} {y2:.0f}" stroke="{rnd.choice(floss)}" '
+                     f'stroke-width="{rnd.uniform(1.5, 2.6):.1f}" fill="none" stroke-linecap="round" opacity="{rnd.uniform(0.35, 0.7):.2f}"/>')
+    for _ in range(16):  # loose tails ending in knots
+        x, y = rnd.uniform(0, 1200), rnd.uniform(10, 210)
+        dx, dy = rnd.uniform(-90, 90), rnd.uniform(-50, 50)
+        col = rnd.choice(floss)
+        parts.append(f'<path d="M{x:.0f} {y:.0f}c{dx*0.3:.0f} {-abs(dy):.0f} {dx*0.8:.0f} {dy:.0f} {dx:.0f} {dy*0.6:.0f}" stroke="{col}" '
+                     f'stroke-width="2" fill="none" stroke-linecap="round" opacity="0.65"/>'
+                     f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{rnd.uniform(3, 5.5):.1f}" fill="{col}" opacity="0.75"/>')
+    return ('<svg class="back-art" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">'
+            + "".join(parts) + "</svg>")
+
+
+BACK_ART = ""
+
+
+def page(title: str, body: str, depth: int, kind: str = "doc") -> str:
     up = "../" * depth
+    home = kind == "home"
+    js_flag = '<script>document.documentElement.classList.add("js")</script>\n' if home else ""
+    script = f'<script src="{up}home.js" defer></script>\n' if home else ""
+    stitch_link = "#stitchwell" if home else f"{up}#stitchwell"
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{e(title)}</title>
-<meta name="description" content="{e(SITE_NAME)}: small, calm games for iPhone and iPad.">
+<meta name="description" content="{e(DESCRIPTION)}">
+<meta property="og:title" content="{e(title)}">
+<meta property="og:description" content="{e(DESCRIPTION)}">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f1eadc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#2b2a28" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="{FAVICON}">
 <link rel="stylesheet" href="{up}style.css">
-</head>
-<body>
-<header class="site">
-  <a class="brand" href="{up}">{e(SITE_NAME)}</a>
-  <nav><a href="{up}privacy/">Privacy</a><a href="{up}terms/">Terms</a><a href="{up}support/">Support</a></nav>
+{js_flag}</head>
+<body class="{'home-page' if home else 'doc-page'}">
+<header class="site-head">
+  <a class="wordmark" href="{up or './'}" aria-label="{e(SITE_NAME)} home">brads{X_MARK}</a>
+  <nav aria-label="Main"><a href="{stitch_link}">Stitchwell</a><a href="{up}support/">Support</a><a href="{up}privacy/">Privacy</a></nav>
 </header>
-<main>
+<main{'' if home else ' class="doc"'}>
 {body}
 </main>
-<footer class="site">
-  <p>&copy; 2026 {e(PUBLISHER)} &middot; <a href="mailto:{e(CONTACT_EMAIL)}">{e(CONTACT_EMAIL)}</a></p>
+<footer class="back">
+  {BACK_ART}
+  <div class="back-inner">
+    <p class="back-label">The back of the work.</p>
+    <nav aria-label="Footer"><a href="{up}privacy/">Privacy</a><a href="{up}terms/">Terms</a><a href="{up}support/">Support</a><a href="mailto:{e(CONTACT_EMAIL)}">{e(CONTACT_EMAIL)}</a></nav>
+    <p class="sign">Stitched in 2026 by {e(PUBLISHER)}.</p>
+  </div>
 </footer>
-</body>
+{script}</body>
 </html>
 """
 
@@ -74,19 +123,77 @@ def live_apps() -> list[dict]:
 
 # ---------------------------------------------------------------- pages
 def home() -> str:
-    items = "".join(
-        f'<li><a href="privacy/{a["slug"]}/"><strong>{e(a["name"])}</strong></a>'
-        f'<span>{e(a["what"])}</span></li>'
-        for a in live_apps()
-    )
+    tick = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 8 8 2M2 2l6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>'
+    facts = [
+        "Real two-leg X stitches, the \\ laid over the /, the way stitchers do it.",
+        "Every finished piece goes in a hoop on your Wall.",
+        "Real art, never AI.",
+        "Turn a photo of your own into a pattern, right on your iPhone.",
+        "Your progress syncs through your own iCloud.",
+    ]
+    fact_items = "".join(f"<li>{tick}<span>{e(f)}</span></li>" for f in facts)
+    seam = '<div class="seam-wrap"><div class="seam sew" role="presentation"></div></div>'
     return f"""
-<section class="hero">
-  <h1>Small, calm games for iPhone and iPad.</h1>
-  <p class="lead">Free to play. Your progress stays on your device and in your own iCloud.</p>
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <h1 id="hero-title">Small games, <em>made by hand.</em></h1>
+      <p>One person. A few crafts. Done slowly and done well.</p>
+      <p>Every game starts with something you can almost touch: thread, cloth, a quiet grid. Play a little each day. Nothing rushes you.</p>
+      <p class="free">Free to play on iPhone and iPad.</p>
+    </div>
+    <div class="hoop-wrap" data-hoop>
+      <div class="screw-tab" aria-hidden="true"></div><div class="screw" aria-hidden="true"></div>
+      <div class="hoop"><div class="cloth">
+        <canvas role="img" aria-label="A cross-stitched heart in an embroidery hoop. Move across it to add stitches."></canvas>
+        <div class="sheen" aria-hidden="true"></div>
+      </div></div>
+      <p class="hint" aria-hidden="true"></p>
+      <div class="hoop-bar no-js-hide">
+        <p class="hoop-status"><b data-count>0</b> of <span data-total>0</span> stitches &middot; <b data-mine>0</b> by you</p>
+        <p class="done-line" role="status">Finished.</p>
+        <button class="btn quiet" id="finish" type="button">Finish it</button>
+        <button class="btn quiet" id="again" type="button">Stitch again</button>
+      </div>
+    </div>
+  </div>
 </section>
-<section>
-  <h2>Our apps</h2>
-  <ul class="apps">{items}</ul>
+
+<section class="section" id="stitchwell" aria-labelledby="sw-title">
+  <div class="app">
+    <div>
+      <p class="eyebrow">Our first craft</p>
+      <h2 id="sw-title">Stitchwell</h2>
+      <p class="lede">Cross stitch, one square at a time. Tap or drag to lay stitches on cream cloth and watch a picture appear.</p>
+      <ul class="facts">{fact_items}</ul>
+      <div class="app-links"><span class="status-pill">Coming soon to the App Store</span><a href="privacy/stitchwell/">Stitchwell privacy</a></div>
+    </div>
+    <div class="studio needs-js" data-studio>
+      <div class="studio-frame">
+        <canvas role="img" aria-label="The picture, stitched as a cross-stitch pattern"></canvas>
+        <div class="drop" aria-hidden="true">Drop a photo to stitch it</div>
+      </div>
+      <div class="studio-controls">
+        <div class="studio-row">
+          <label class="btn file-btn">Stitch your own photo<input type="file" accept="image/*"></label>
+          <button class="btn quiet" type="button" data-save>Save image</button>
+        </div>
+        <label class="range">Stitches across <input type="range" min="24" max="72" step="4" value="44"><output>44 × 33</output></label>
+        <ul class="swatches" aria-label="Floss colours in this pattern"></ul>
+        <p class="fine">This runs in your browser. Your photo isn’t uploaded anywhere.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{seam}
+
+<section class="section center" aria-labelledby="wt-title">
+  <p class="eyebrow">On the worktable</p>
+  <h2 id="wt-title">More crafts are being made.</h2>
+  <p class="lede">Each one becomes its own small game when it’s ready.</p>
+  <div class="table" aria-hidden="true"><div class="mini-hoop"><span></span></div><div class="mini-hoop"><span></span></div><div class="mini-hoop"><span></span></div></div>
+  <p class="table-note">Not ready yet. Worth the wait.</p>
 </section>
 """
 
@@ -247,32 +354,50 @@ Tell us which app, your device and iOS version, and what happened.</p>
 
 
 def not_found() -> str:
-    return '<article class="doc"><h1>Page not found</h1><p><a href="/">Go to the home page</a>.</p></article>'
+    return """
+<div class="lost">
+  <svg viewBox="0 0 360 160" aria-hidden="true" focusable="false">
+    <path d="M10 40 C 80 10, 120 90, 180 60 S 280 20, 300 110 S 340 150, 352 128" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="14 7"/>
+    <g stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity="0.9"><path d="M60 120 80 100M60 100l20 20"/><path d="M96 130 116 110"/></g>
+  </svg>
+  <h1>A dropped stitch.</h1>
+  <p>This page came loose from the cloth.</p>
+  <p><a class="btn" href="/">Back to the hoop</a></p>
+</div>
+"""
 
 
 # ---------------------------------------------------------------- build
-def write(rel: str, title: str, body: str) -> None:
+def write(rel: str, title: str, body: str, kind: str = "doc") -> None:
     path = OUT / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     depth = rel.count("/")
-    path.write_text(page(title, body, depth), encoding="utf-8")
+    path.write_text(page(title, body, depth, kind), encoding="utf-8")
 
 
 def main() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir()
+    global BACK_ART
+    BACK_ART = back_of_work()
     shutil.copy(STATIC / "style.css", OUT / "style.css")
+    shutil.copy(STATIC / "home.js", OUT / "home.js")
     (OUT / "CNAME").write_text(DOMAIN + "\n")
     (OUT / ".nojekyll").write_text("")
 
-    write("index.html", SITE_NAME, home())
+    write("index.html", f"{SITE_NAME} · small games, made by hand", home(), "home")
     write("privacy/index.html", f"Privacy policy · {SITE_NAME}", privacy_body(None))
     for app in live_apps():
         write(f"privacy/{app['slug']}/index.html", f"{app['name']} privacy policy · {SITE_NAME}", privacy_body(app))
     write("terms/index.html", f"Terms of use · {SITE_NAME}", terms())
     write("support/index.html", f"Support · {SITE_NAME}", support())
-    (OUT / "404.html").write_text(page(f"Not found · {SITE_NAME}", not_found(), 0).replace('href="style.css"', 'href="/style.css"'), encoding="utf-8")
+    (OUT / "404.html").write_text(
+        page(f"Not found · {SITE_NAME}", not_found(), 0)
+        .replace('href="style.css"', 'href="/style.css"').replace('href="./"', 'href="/"')
+        .replace('href="support/"', 'href="/support/"').replace('href="privacy/"', 'href="/privacy/"')
+        .replace('href="terms/"', 'href="/terms/"').replace('href="#stitchwell"', 'href="/#stitchwell"'),
+        encoding="utf-8")
     print(f"Built {sum(1 for _ in OUT.rglob('*.html'))} pages into {OUT}")
 
 
