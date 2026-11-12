@@ -20,6 +20,17 @@ Add an app to `APPS` shortly before its App Store submission. The repo is public
 | Marketing URL (optional) | `https://brads.io/` |
 | License Agreement | Apple's Standard EULA (the default; nothing to upload) |
 
+## app-ads.txt (ads)
+
+`build.py` writes `docs/app-ads.txt`, served at `https://brads.io/app-ads.txt`. Ad networks check it to confirm that ads in our apps are sold by us.
+
+1. In the AppLovin MAX dashboard, open Account › app-ads.txt and copy the line(s) exactly.
+2. Paste each line as a string into `APP_ADS_LINES` at the top of `build.py`, run `python3 build.py`, commit, push.
+3. In App Store Connect, set each app's **Marketing URL** to `https://brads.io/` (networks look for the file on that domain; verify in AppLovin's docs).
+4. Check `https://brads.io/app-ads.txt` in a browser. AppLovin shows "verified" after its next crawl (can take a day or more).
+
+Until step 2 the file holds only comments, which is valid and harmless.
+
 ## One-time setup (owner)
 
 ### 1. Publish on GitHub Pages

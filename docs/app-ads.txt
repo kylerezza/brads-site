@@ -1,0 +1,2 @@
+# app-ads.txt for brads.io (apps published by Yucel Sanli). See https://iabtechlab.com/ads-txt/
+# TODO: add the AppLovin line from the MAX dashboard (APP_ADS_LINES in build.py).

@@ -25,6 +25,13 @@ AD_PARTNER = "AppLovin"
 AD_PARTNER_PRIVACY = "https://www.applovin.com/privacy/"
 APPLE_EULA = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
 
+# app-ads.txt (served at https://brads.io/app-ads.txt). Ad networks read it from the domain of the
+# Marketing URL on the App Store page, so that URL must be https://brads.io/.
+# TODO(owner): paste the exact line(s) from the AppLovin MAX dashboard (Account › app-ads.txt)
+# here, e.g. "applovin.com, <your account ID>, DIRECT, <certification ID>". Copy them
+# verbatim; do not type them by hand. Add one line per mediation network later.
+APP_ADS_LINES: list[str] = []
+
 # Only apps with published=True appear on the site. Turn an app on shortly
 # before its App Store submission. This repo is public: never list an unreleased app here.
 # photos: the app can turn a photo you pick into a puzzle, on the device.
@@ -37,6 +44,10 @@ APPS = [
      "count": "You placed <b>0</b> stitches. The app has plenty more waiting.",
      "accent": "#9a3b48", "accent_dark": "#efa2ac",
      "palette": ["#b5525e", "#9a3b48", "#f1eadc", "#c9a27c", "#d5cbb8", "#2b2a28"],
+     "finish": "finished pattern",
+     "ads": ("a full-screen ad when you leave a finished pattern and one when you start a new pattern, "
+             "a banner at the bottom of menu screens, and optional reward videos you choose to watch. "
+             "There are never ads while you stitch."),
      "store": None},
 ]
 
@@ -191,6 +202,11 @@ uploaded or shared with advertisers. Only the finished pattern is saved, on your
 in your own iCloud account.</p>
 """
 
+    ads_where = ""
+    if app and app.get("ads"):
+        ads_where = f"<p><strong>Where ads appear in {e(app['name'])}:</strong> {e(app['ads'])}</p>\n"
+    finish = app.get("finish", "finished game") if app else "finished game"
+
     per_app = ""
     if app is None and live_apps():
         per_app = "<h2>Policies per app</h2><ul>" + "".join(
@@ -211,7 +227,7 @@ in your own iCloud account.</p>
 </div>
 
 <h2>Data collected for advertising</h2>
-<p>When you use the free version, the advertising software inside the app ({e(AD_PARTNER)}, including its
+{ads_where}<p>When you use the free version, the advertising software inside the app ({e(AD_PARTNER)}, including its
 ad mediation partners) may collect:</p>
 <ul>
   <li><strong>Device identifiers</strong> — the advertising identifier (IDFA) only if you allow tracking, and
@@ -229,7 +245,7 @@ how many ads were shown) and cannot identify you from them.</p>
 
 <h3>Your choices</h3>
 <ul>
-  <li><strong>Tracking:</strong> after your first finished game, the app asks whether it may track you
+  <li><strong>Tracking:</strong> after your first {e(finish)}, the app asks whether it may track you
   (Apple’s App Tracking Transparency prompt). You can change this any time in Settings › Privacy &amp; Security ›
   Tracking.</li>
   <li><strong>Personalised ads:</strong> if you decline tracking, ads are not personalised.</li>
@@ -345,6 +361,13 @@ def write(rel: str, title: str, body: str, kind: str = "doc") -> None:
     path.write_text(page(title, body, depth, kind), encoding="utf-8")
 
 
+def write_app_ads() -> None:
+    header = [f"# app-ads.txt for {DOMAIN} (apps published by {PUBLISHER}). See https://iabtechlab.com/ads-txt/"]
+    if not APP_ADS_LINES:
+        header.append("# TODO: add the AppLovin line from the MAX dashboard (APP_ADS_LINES in build.py).")
+    (OUT / "app-ads.txt").write_text("\n".join(header + APP_ADS_LINES) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
@@ -358,6 +381,7 @@ def main() -> None:
     write("privacy/index.html", f"Privacy policy · {SITE_NAME}", privacy_body(None))
     for app in live_apps():
         write(f"privacy/{app['slug']}/index.html", f"{app['name']} privacy policy · {SITE_NAME}", privacy_body(app))
+    write_app_ads()
     write("terms/index.html", f"Terms of use · {SITE_NAME}", terms())
     write("support/index.html", f"Support · {SITE_NAME}", support())
     (OUT / "404.html").write_text(
