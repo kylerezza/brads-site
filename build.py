@@ -32,6 +32,10 @@ APPLE_EULA = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
 # verbatim; do not type them by hand. Add one line per mediation network later.
 APP_ADS_LINES: list[str] = []
 
+# Where the in-app "Do Not Sell or Share" switch lives (US state privacy laws, e.g. CCPA/CPRA).
+# TODO(ads session): keep this path identical to the label in the app's Settings.
+DO_NOT_SELL_PATH = "Settings (the gear on Today) › Privacy › Do Not Sell or Share My Info"
+
 # Only apps with published=True appear on the site. Turn an app on shortly
 # before its App Store submission. This repo is public: never list an unreleased app here.
 # photos: the app can turn a photo you pick into a puzzle, on the device.
@@ -45,6 +49,7 @@ APPS = [
      "accent": "#9a3b48", "accent_dark": "#efa2ac",
      "palette": ["#b5525e", "#9a3b48", "#f1eadc", "#c9a27c", "#d5cbb8", "#2b2a28"],
      "finish": "finished pattern",
+     "game_center": "achievements",
      "ads": ("a full-screen ad when you leave a finished pattern and one when you start a new pattern, "
              "a banner at the bottom of menu screens, and optional reward videos you choose to watch. "
              "There are never ads while you stitch."),
@@ -206,6 +211,14 @@ in your own iCloud account.</p>
     if app and app.get("ads"):
         ads_where = f"<p><strong>Where ads appear in {e(app['name'])}:</strong> {e(app['ads'])}</p>\n"
     finish = app.get("finish", "finished game") if app else "finished game"
+    apple_pp = '<a href="https://www.apple.com/legal/privacy/">Apple’s Privacy Policy</a>'
+    if app and app.get("game_center") == "achievements":
+        gc_text = (f"Game Center is off until you turn it on in the app’s settings. If you do, the app reports your "
+                   f"achievements to Apple, which handles them under {apple_pp}. {e(app['name'])} has no leaderboards.")
+    else:
+        gc_text = (f"Game Center is off until you turn it on in an app’s settings. If you do, Apple handles your "
+                   f"achievements (and, in apps that have them, leaderboard scores) under {apple_pp}. On a "
+                   f"leaderboard we see only what Apple shows every developer, such as your nickname and score.")
 
     per_app = ""
     if app is None and live_apps():
@@ -227,8 +240,8 @@ in your own iCloud account.</p>
 </div>
 
 <h2>Data collected for advertising</h2>
-{ads_where}<p>When you use the free version, the advertising software inside the app ({e(AD_PARTNER)}, including its
-ad mediation partners) may collect:</p>
+{ads_where}<p>When you use the free version, the advertising software inside the app ({e(AD_PARTNER)}; we use no other
+ad networks) may collect:</p>
 <ul>
   <li><strong>Device identifiers</strong> — the advertising identifier (IDFA) only if you allow tracking, and
   identifiers for this app on your device;</li>
@@ -250,13 +263,21 @@ how many ads were shown) and cannot identify you from them.</p>
   Tracking.</li>
   <li><strong>Personalised ads:</strong> if you decline tracking, ads are not personalised.</li>
   <li><strong>Fewer or no ads:</strong> the one-time Remove Ads purchase turns off pop-up and banner ads; an active monthly subscription turns off all ads.</li>
-  <li><strong>Opt-out requests:</strong> you can ask {e(AD_PARTNER)} not to sell or share your data, or to
-  delete data it holds, using the options in its privacy policy.</li>
+  <li><strong>Do Not Sell or Share:</strong> turn on <em>{e(DO_NOT_SELL_PATH)}</em>. The app then tells
+  {e(AD_PARTNER)} not to sell or share your data, and you still see ads, just not personalised ones. The switch
+  is on your device; set it on each device you use. You can also ask {e(AD_PARTNER)} to delete data it holds,
+  using the options in its privacy policy, or write to us and we will help.</li>
 </ul>
 
 <h2>Data we do not collect</h2>
 <p>We do not ask for your name, email or any account. We do not use separate analytics, attribution or
-crash-reporting tools. We do not sell data ourselves.</p>
+crash-reporting tools.</p>
+
+<h2>Selling and sharing (US state privacy laws)</h2>
+<p>We never sell your data for money. However, letting {e(AD_PARTNER)} collect device and usage data to show
+personalised (behavioural) ads can count as “selling” or “sharing” personal information under some US state
+laws, such as California’s. You can opt out at any time with the <em>Do Not Sell or Share</em> switch described
+above, by declining tracking, or by buying Remove Ads or subscribing.</p>
 
 <h2>Where your game data lives</h2>
 <h3>On your device</h3>
@@ -271,9 +292,7 @@ Settings › [your name] › iCloud.</p>
 email or payment details. The app only asks Apple whether a purchase or subscription is active. Manage or
 cancel subscriptions in Settings › [your name] › Subscriptions.</p>
 <h3>Game Center (optional)</h3>
-<p>If you choose to use Game Center for achievements or leaderboards, Apple handles it under
-<a href="https://www.apple.com/legal/privacy/">Apple’s Privacy Policy</a>. We only see what Apple shows to
-all developers on a leaderboard, such as your Game Center nickname and score.</p>
+<p>{gc_text}</p>
 <h3>Notifications</h3>
 <p>Reminders are local notifications created on your device. They are off until you turn them on.</p>
 <h3>Crash reports from Apple</h3>
@@ -294,6 +313,10 @@ its privacy options or write to us and we will help.</p>
 <h2>Changes to this policy</h2>
 <p>If this policy changes, we will update this page and the effective date above, and update the App Store
 privacy label before the changed version is released.</p>
+
+<h2>Emails to support</h2>
+<p>If you write to us, we use your email address and message only to reply to you, and keep them only as long
+as we need to answer and follow up. We never add you to a mailing list or share your email.</p>
 
 <h2>Contact</h2>
 <p>{e(PUBLISHER)} &middot; <a href="mailto:{e(CONTACT_EMAIL)}">{e(CONTACT_EMAIL)}</a></p>
