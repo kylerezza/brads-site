@@ -33,8 +33,8 @@ APPLE_EULA = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
 APP_ADS_LINES: list[str] = []
 
 # Where the in-app "Do Not Sell or Share" switch lives (US state privacy laws, e.g. CCPA/CPRA).
-# TODO(ads session): keep this path identical to the label in the app's Settings.
-DO_NOT_SELL_PATH = "Settings (the gear on Today) › Privacy › Do Not Sell or Share My Info"
+# Only shown for apps with ads_enabled. Matches the app's label (stitchwell docs/privacy-label.md).
+DO_NOT_SELL_PATH = "Settings › Purchases › Do not sell or share my info"
 
 # Only apps with published=True appear on the site. Turn an app on shortly
 # before its App Store submission. This repo is public: never list an unreleased app here.
@@ -50,6 +50,10 @@ APPS = [
      "palette": ["#b5525e", "#9a3b48", "#f1eadc", "#c9a27c", "#d5cbb8", "#2b2a28"],
      "finish": "finished pattern",
      "game_center": "achievements",
+     # ads_enabled: False while the shipped version has no ad SDK (Stitchwell 1.0: ADS_ENABLED = NO).
+     # Turn on only in the same release as the app update that switches ads on, and update EFFECTIVE_DATE.
+     "ads_enabled": False,
+     "diagnostics": "Settings › About › Send diagnostics",
      "ads": ("a full-screen ad when you leave a finished pattern and one when you start a new pattern, "
              "a banner at the bottom of menu screens, and optional reward videos you choose to watch. "
              "There are never ads while you stitch."),
@@ -187,58 +191,37 @@ def home() -> str:
 
 
 def privacy_body(app: dict | None) -> str:
+    scope_apps = [app] if app else live_apps()
+    ads = any(a.get("ads_enabled") for a in scope_apps)
+    apple_pp = '<a href="https://www.apple.com/legal/privacy/">Apple’s Privacy Policy</a>'
     if app:
         heading = f"{e(app['name'])} privacy policy"
         scope = (f"This policy covers <strong>{e(app['name'])}</strong> for iPhone and iPad, "
                  f"published by {e(PUBLISHER)} (“we”).")
+        it, its = "The app", "the app’s"
     else:
         heading = "Privacy policy"
         scope = (f"This policy covers every app published by {e(PUBLISHER)} (“we”) on the App Store "
                  f"(“our apps”). Each app also has its own page, listed at the bottom.")
+        it, its = "Our apps", "each app’s"
 
-    photos = ""
-    if app is None or app["photos"]:
-        who = "Some of our apps let" if app is None else "The app lets"
-        photos = f"""
-<h3>Photos you choose</h3>
-<p>{who} you turn a photo into a puzzle. You pick the photo with Apple’s photo picker, so the app only
-sees the photo you choose and never your whole library. The photo is processed on your device and is never
-uploaded or shared with advertisers. Only the finished pattern is saved, on your device and, if you use iCloud,
-in your own iCloud account.</p>
-"""
+    if ads:
+        short = (f"{it} are free to play with ads. The ads are provided by {e(AD_PARTNER)}, which collects some "
+                 f"device and usage data to show and measure ads. If you allow tracking, ads can be personalised; "
+                 f"if you don’t, you still see ads, just not personalised ones. We do not run our own analytics, "
+                 f"and we have no accounts.")
+    else:
+        short = (f"{it} {'collects' if app else 'collect'} no data about you. There are no ads, no tracking, no analytics and no accounts. "
+                 f"Your progress stays on your device and, if you use iCloud, in your own private iCloud. "
+                 f"Purchases and Game Center are handled by Apple.")
 
+    finish = app.get("finish", "finished game") if app else "finished game"
     ads_where = ""
     if app and app.get("ads"):
         ads_where = f"<p><strong>Where ads appear in {e(app['name'])}:</strong> {e(app['ads'])}</p>\n"
-    finish = app.get("finish", "finished game") if app else "finished game"
-    apple_pp = '<a href="https://www.apple.com/legal/privacy/">Apple’s Privacy Policy</a>'
-    if app and app.get("game_center") == "achievements":
-        gc_text = (f"Game Center is off until you turn it on in the app’s settings. If you do, the app reports your "
-                   f"achievements to Apple, which handles them under {apple_pp}. {e(app['name'])} has no leaderboards.")
-    else:
-        gc_text = (f"Game Center is off until you turn it on in an app’s settings. If you do, Apple handles your "
-                   f"achievements (and, in apps that have them, leaderboard scores) under {apple_pp}. On a "
-                   f"leaderboard we see only what Apple shows every developer, such as your nickname and score.")
 
-    per_app = ""
-    if app is None and live_apps():
-        per_app = "<h2>Policies per app</h2><ul>" + "".join(
-            f'<li><a href="{a["slug"]}/">{e(a["name"])}</a></li>' for a in live_apps()
-        ) + "</ul>"
-
-    return f"""
-<article class="doc">
-<h1>{heading}</h1>
-<p class="meta">Effective {e(EFFECTIVE_DATE)}</p>
-<p>{scope}</p>
-
-<div class="callout">
-  <p><strong>The short version:</strong> our apps are free to play with ads. The ads are provided by
-  {e(AD_PARTNER)}, which collects some device and usage data to show and measure ads. If you allow tracking,
-  ads can be personalised; if you don’t, you still see ads, just not personalised ones. A one-time Remove Ads
-  purchase turns off pop-up and banner ads, and a monthly subscription removes all ads. We do not run our own analytics, and we have no accounts.</p>
-</div>
-
+    if ads:
+        ads_section = f"""
 <h2>Data collected for advertising</h2>
 {ads_where}<p>When you use the free version, the advertising software inside the app ({e(AD_PARTNER)}; we use no other
 ad networks) may collect:</p>
@@ -269,21 +252,88 @@ how many ads were shown) and cannot identify you from them.</p>
   using the options in its privacy policy, or write to us and we will help.</li>
 </ul>
 
-<h2>Data we do not collect</h2>
-<p>We do not ask for your name, email or any account. We do not use separate analytics, attribution or
-crash-reporting tools.</p>
-
 <h2>Selling and sharing (US state privacy laws)</h2>
 <p>We never sell your data for money. However, letting {e(AD_PARTNER)} collect device and usage data to show
 personalised (behavioural) ads can count as “selling” or “sharing” personal information under some US state
 laws, such as California’s. You can opt out at any time with the <em>Do Not Sell or Share</em> switch described
 above, by declining tracking, or by buying Remove Ads or subscribing.</p>
+"""
+        not_collected = ("<p>We do not ask for your name, email or any account. We do not use separate analytics, "
+                         "attribution or crash-reporting tools.</p>")
+    else:
+        ads_section = f"""
+<h2>No ads, no tracking</h2>
+<p>The current version of {"the app" if app else "our apps"} has no ads and contains no advertising, analytics,
+attribution or crash-reporting software. It never asks to track you and never reads the advertising identifier.
+We do not sell or share your personal information, because we do not collect any.</p>
+<p><strong>Not in the current version:</strong> a later update may add ads. If it does, we will update this
+policy and the App Store privacy label <em>before</em> that version is released, describe exactly which data
+the ad provider collects, and explain your choices (including the tracking prompt and a “Do Not Sell or
+Share” option).</p>
+"""
+        not_collected = ("<p>We do not ask for your name, email or any account, and the app sends nothing to us or "
+                         "to anyone else. We have no servers that receive data from the app.</p>")
+
+    photos = ""
+    if app is None or app.get("photos"):
+        who = "Some of our apps let" if app is None else "The app lets"
+        ad_tail = " or shared with advertisers" if ads else ""
+        photos = f"""
+<h3>Photos you choose</h3>
+<p>{who} you turn a photo into a puzzle. You pick the photo with Apple’s photo picker, so the app only
+sees the photo you choose and never your whole library. The photo is processed on your device and is never
+uploaded{ad_tail}. Only the finished pattern is saved, on your device and, if you use iCloud,
+in your own iCloud account.</p>
+"""
+
+    if app and app.get("game_center") == "achievements":
+        gc_text = (f"Game Center is off until you turn it on in the app’s settings. If you do, the app reports your "
+                   f"achievements to Apple, which handles them under {apple_pp}. The app does not store or send your "
+                   f"Game Center player ID. {e(app['name'])} has no leaderboards.")
+    else:
+        gc_text = (f"Game Center is off until you turn it on in an app’s settings. If you do, Apple handles your "
+                   f"achievements (and, in apps that have them, leaderboard scores) under {apple_pp}. On a "
+                   f"leaderboard we see only what Apple shows every developer, such as your nickname and score.")
+
+    diag_where = f" ({e(app['diagnostics'])})" if app and app.get("diagnostics") else ""
+    diagnostics = f"""
+<h3>Diagnostics you choose to send</h3>
+<p>If {"the app" if app else "an app"} crashes or freezes, iOS may give it a technical report (for example, which
+part of the code was running). The app keeps these reports on your device only. They leave it only if you
+choose to send them{diag_where}: that opens the share sheet, and you decide where they go, for example an email
+to us. They contain no photos, patterns or personal details.</p>
+"""
+
+    child_tail = (f" and we will help you ask {e(AD_PARTNER)} to delete it" if ads else " and we will help")
+    rights = (f"We do not hold personal data about you ourselves; advertising data is held by {e(AD_PARTNER)}, and "
+              f"you can use its privacy options or write to us and we will help." if ads else
+              "We do not hold personal data about you, apart from emails you choose to send us. Write to us and we "
+              "will answer any request, including deleting your emails.")
+
+    per_app = ""
+    if app is None and live_apps():
+        per_app = "<h2>Policies per app</h2><ul>" + "".join(
+            f'<li><a href="{a["slug"]}/">{e(a["name"])}</a></li>' for a in live_apps()
+        ) + "</ul>"
+
+    return f"""
+<article class="doc">
+<h1>{heading}</h1>
+<p class="meta">Effective {e(EFFECTIVE_DATE)}</p>
+<p>{scope}</p>
+
+<div class="callout">
+  <p><strong>The short version:</strong> {short}</p>
+</div>
+{ads_section}
+<h2>Data we do not collect</h2>
+{not_collected}
 
 <h2>Where your game data lives</h2>
 <h3>On your device</h3>
 <p>Your progress, settings and creations are stored on your device.</p>
 <h3>Your own iCloud (optional)</h3>
-<p>If you are signed in to iCloud, the app can sync your progress between your devices using Apple’s iCloud
+<p>If you are signed in to iCloud, {its} progress can sync between your devices through Apple’s iCloud,
 in your private iCloud account. We cannot see or access this data. You can turn this off and delete it in
 Settings › [your name] › iCloud.</p>
 {photos}
@@ -295,6 +345,7 @@ cancel subscriptions in Settings › [your name] › Subscriptions.</p>
 <p>{gc_text}</p>
 <h3>Notifications</h3>
 <p>Reminders are local notifications created on your device. They are off until you turn them on.</p>
+{diagnostics}
 <h3>Crash reports from Apple</h3>
 <p>If you have chosen to share analytics with app developers in your device settings, Apple may give us
 anonymous crash reports and usage statistics. Change this in Settings › Privacy &amp; Security ›
@@ -302,21 +353,19 @@ Analytics &amp; Improvements.</p>
 
 <h2>Children</h2>
 <p>Our apps are made for a general audience and are not directed at children under 13. We do not knowingly
-collect personal data from children. If you believe a child has used one of our apps and data was collected,
-contact us and we will help you ask {e(AD_PARTNER)} to delete it.</p>
+collect personal data from children. If you believe a child has sent us personal data, contact us{child_tail}.</p>
 
 <h2>Your rights</h2>
 <p>Depending on where you live, you may have rights to access, delete or object to the use of personal data.
-We do not hold personal data about you ourselves; advertising data is held by {e(AD_PARTNER)}, and you can use
-its privacy options or write to us and we will help.</p>
-
-<h2>Changes to this policy</h2>
-<p>If this policy changes, we will update this page and the effective date above, and update the App Store
-privacy label before the changed version is released.</p>
+{rights}</p>
 
 <h2>Emails to support</h2>
 <p>If you write to us, we use your email address and message only to reply to you, and keep them only as long
 as we need to answer and follow up. We never add you to a mailing list or share your email.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy changes, we will update this page and the effective date above, and update the App Store
+privacy label before the changed version is released.</p>
 
 <h2>Contact</h2>
 <p>{e(PUBLISHER)} &middot; <a href="mailto:{e(CONTACT_EMAIL)}">{e(CONTACT_EMAIL)}</a></p>
@@ -342,6 +391,11 @@ manage them in Settings › [your name] › Subscriptions.</p>
 
 
 def support() -> str:
+    ads_faq = ""
+    if any(a.get("ads_enabled") for a in live_apps()):
+        ads_faq = ("<h3>How do I remove ads?</h3>\n<p>Buy <em>Remove Ads</em> once in the app’s Settings to turn off "
+                   "pop-up and banner ads for good, or start the monthly subscription, which turns off all ads and "
+                   "unlocks everything while it is active.</p>\n")
     return f"""
 <article class="doc">
 <h1>Support</h1>
@@ -351,9 +405,7 @@ Tell us which app, your device and iOS version, and what happened.</p>
 <h2>Common questions</h2>
 <h3>How do I restore a purchase?</h3>
 <p>Open the app’s Settings and tap <em>Restore Purchases</em>, signed in with the same Apple Account you bought with.</p>
-<h3>How do I remove ads?</h3>
-<p>Buy <em>Remove Ads</em> once in the app’s Settings to turn off pop-up and banner ads for good, or start the monthly subscription, which turns off all ads and unlocks everything while it is active.</p>
-<h3>How do I cancel a subscription?</h3>
+{ads_faq}<h3>How do I cancel a subscription?</h3>
 <p>On your iPhone or iPad: Settings › [your name] › Subscriptions, then choose the app.</p>
 <h3>How do I get a refund?</h3>
 <p>Refunds are handled by Apple at <a href="https://reportaproblem.apple.com">reportaproblem.apple.com</a>.</p>
@@ -397,7 +449,7 @@ def main() -> None:
     OUT.mkdir()
     shutil.copy(STATIC / "style.css", OUT / "style.css")
     shutil.copy(STATIC / "wall.js", OUT / "wall.js")
-    (OUT / "CNAME").write_text(DOMAIN + "\n")
+    (OUT / "CNAME").write_text(DOMAIN)  # no newline, same as the file GitHub Pages created
     (OUT / ".nojekyll").write_text("")
 
     write("index.html", f"{SITE_NAME} · games you can almost touch", home(), "home")
